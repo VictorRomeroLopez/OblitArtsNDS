@@ -40,153 +40,17 @@ demos will follow this one.
 ---------------------------------------------------------------------------------*/
 #include <nds.h>
 
-#include <man.h>
-#include <woman.h>
 #include <flappy_yellow.h>
-
-#define FRAMES_PER_ANIMATION 3
-
-//---------------------------------------------------------------------
-// The man sprite
-// he needs a single pointer to sprite memory
-// and a reference to his frame graphics so they
-// can be loaded as needed
-//---------------------------------------------------------------------
-typedef struct 
-{
-	int x;
-	int y;
-
-	u16* sprite_gfx_mem;
-	u8*  frame_gfx;
-
-	int state;
-	int anim_frame;
-}Man;
-
-//---------------------------------------------------------------------
-// The womman sprite
-// she needs an array of pointers to sprite memory since all 
-// her frames are to be loaded.
-// she also needs to keep track of which sprite memory pointer is in use
-//---------------------------------------------------------------------
-
-typedef struct
-{
-	int x;
-	int y;
-
-	u16* sprite_gfx_mem[12];
-	int gfx_frame;
-
-	int state;
-	int anim_frame;
-
-
-}Woman;
-
-typedef struct
-{
-	int x;
-	int y;
-
-	u16* sprite_gfx_mem[12];
-	int gfx_frame;
-
-	int anim_frame;
-}Bird;
-
-//---------------------------------------------------------------------
-// The state of the sprite (which way it is walking)
-//---------------------------------------------------------------------
-enum SpriteState {W_UP = 0, W_RIGHT = 1, W_DOWN = 2, W_LEFT = 3};
+#include "pipe.h"
+#include "bird.h"
 
 //---------------------------------------------------------------------
 // Screen dimentions
 //---------------------------------------------------------------------
 enum {SCREEN_TOP = 0, SCREEN_BOTTOM = 192, SCREEN_LEFT = 0, SCREEN_RIGHT = 256};
 
-//---------------------------------------------------------------------
-// Animating a man requires us to copy in a new frame of data each time
-//---------------------------------------------------------------------
-void animateMan(Man *sprite)
+void initBackgrounds()
 {
-	int frame = sprite->anim_frame + sprite->state * FRAMES_PER_ANIMATION;
-
-	u8* offset = sprite->frame_gfx + frame * 32*32;
-
-	dmaCopy(offset, sprite->sprite_gfx_mem, 32*32);
-}
-
-//---------------------------------------------------------------------
-// Initializing a man requires little work, allocate room for one frame
-// and set the frame gfx pointer
-//---------------------------------------------------------------------
-void initMan(Man *sprite, u8* gfx)
-{
-	sprite->sprite_gfx_mem = oamAllocateGfx(&oamMain, SpriteSize_32x32, SpriteColorFormat_256Color);
-	
-	sprite->frame_gfx = (u8*)gfx;
-}
-
-//---------------------------------------------------------------------
-// Animating a woman only requires us to alter which sprite memory pointer
-// she is using
-//---------------------------------------------------------------------
-void animateWoman(Woman *sprite)
-{
-	sprite->gfx_frame = sprite->anim_frame + sprite->state * FRAMES_PER_ANIMATION;
-}
-
-//---------------------------------------------------------------------
-// Initializing a woman requires us to load all of her graphics frames 
-// into memory
-//---------------------------------------------------------------------
-void initWoman(Woman *sprite, u8* gfx)
-{
-	int i;
-
-	for(i = 0; i < 12; i++)
-	{
-		sprite->sprite_gfx_mem[i] = oamAllocateGfx(&oamSub, SpriteSize_32x32, SpriteColorFormat_256Color);
-		dmaCopy(gfx, sprite->sprite_gfx_mem[i], 32*32);
-		gfx += 32*32;
-	}
-}
-
-void animateBird(Bird *sprite)
-{
-	sprite->gfx_frame = sprite->anim_frame;
-}
-
-void showPipe(Bird *sprite){
-	sprite->gfx_frame = 0;
-}
-
-void initBird(Bird* sprite, int gfxoffset, u8* gfx)
-{
-	int i;
-
-	gfx += gfxoffset;
-
-	for(i = 0; i < 3; i++)
-	{
-		sprite->sprite_gfx_mem[i] = oamAllocateGfx(&oamSub, SpriteSize_32x32, SpriteColorFormat_256Color);
-		dmaCopy(gfx, sprite->sprite_gfx_mem[i], 32*32);
-		gfx += 32*32;
-	}
-}
-
-void initPipe(Bird* sprite, int gfxoffset, u8* gfx){
-	
-	gfx += gfxoffset;
-
-	sprite->sprite_gfx_mem[0] = oamAllocateGfx(&oamSub, SpriteSize_32x64, SpriteColorFormat_256Color);
-	dmaCopy(gfx, sprite->sprite_gfx_mem[0], 32*64);
-	gfx += 32*64;
-}
-
-void initBackgrounds() {
     /*  Set up affine background 3 on main as a 16-bit color background. */
     REG_BG3CNT = BG_BMP16_256x256 |
                  BG_BMP_BASE(0) | // The starting place in memory
@@ -251,10 +115,9 @@ void initBackgrounds() {
 int main(void) 
 {
 	int frameCounter = 0;
-	Man man = {0,0};
 	Bird bird = {0,0};
-	Bird bird_red = {0,0};
-	Bird pipe = {0,0};
+	Pipe middle_pipe = {10, 10, PIPE_MIDDLE};
+	Pipe down_pipe = {10, 32+10, PIPE_DOWN};
 
 	//-----------------------------------------------------------------
 	// Initialize the graphics engines
@@ -269,14 +132,12 @@ int main(void)
 	oamInit(&oamSub, SpriteMapping_1D_128, false);
 
 	//-----------------------------------------------------------------
-	// Initialize the two sprites
+	// Init sprites
 	//-----------------------------------------------------------------
-	initMan(&man, (u8*)manTiles);
-	initBird(&bird, 0, (u8*)flappy_yellowTiles);
-	initBird(&bird_red, 32*32*3, (u8*)flappy_yellowTiles);
-	initPipe(&pipe, 32*32*6, (u8*)flappy_yellowTiles);
+	initBirdSprites(0, (u8*)flappy_yellowTiles);
+	initPipeSprites(32*32*6, (u8*)flappy_yellowTiles);
 	
-	dmaCopy(manPal, SPRITE_PALETTE, 512);
+	//dmaCopy(manPal, SPRITE_PALETTE, 512);
 	dmaCopy(flappy_yellowPal, SPRITE_PALETTE_SUB, 512);
 
 	//-----------------------------------------------------------------
@@ -295,80 +156,42 @@ int main(void)
 		{
 			if(keys & KEY_UP)
 			{
-				if(man.y >= SCREEN_TOP) man.y--;
 				if(bird.y >= SCREEN_TOP) bird.y--;
-
-				man.state = W_UP;
 			}
 			if(keys & KEY_LEFT)
 			{
-				if(man.x >= SCREEN_LEFT) man.x--;
 				if(bird.x >= SCREEN_LEFT) bird.x--;
-
-				man.state = W_LEFT;
 			}
 			if(keys & KEY_RIGHT)
 			{
-				if(man.x <= SCREEN_RIGHT) man.x++;
 				if(bird.x <= SCREEN_RIGHT) bird.x++;
-
-				man.state = W_RIGHT;
 			}
 			if(keys & KEY_DOWN)
 			{
-				if(man.y <= SCREEN_BOTTOM) man.y++;
 				if(bird.y <= SCREEN_BOTTOM) bird.y++;
-
-				man.state = W_DOWN;
 			}
 		}
 
 		if(frameCounter % 10 == 0){
-			man.anim_frame++;
-			bird.anim_frame++;
-			bird_red.anim_frame++;
+			nextBirdAnimationFrame(&bird);
 		}
-
-		if(man.anim_frame >= FRAMES_PER_ANIMATION) 
-		{
-			man.anim_frame = 0;
-		}
-
-		if(bird.anim_frame >= FRAMES_PER_ANIMATION)
-		{
-			bird.anim_frame = 0;
-		}
-
-		if(bird_red.anim_frame >= FRAMES_PER_ANIMATION)
-		{
-			bird_red.anim_frame = 0;
-		}
-
-		animateMan(&man);
-		animateBird(&bird);
-		animateBird(&bird_red);
-		showPipe(&pipe);
 
 		//-----------------------------------------------------------------
 		// Set oam attributes, notice the only difference is in the sprite 
 		// graphics memory pointer argument.  The man only has one pointer
 		// while the women has an array of pointers
-		//-----------------------------------------------------------------
-		int mainId = 0;
-		oamSet(&oamMain, mainId, man.x, man.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
-			man.sprite_gfx_mem, -1, false, false, false, false, false);
+		//------------------------------------------------------------------
+
+		//int mainId = 0;
+		// oamSet(&oamMain, mainId, man.x, man.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
+		// 	man.sprite_gfx_mem, -1, false, false, false, false, false);
 		
 		int subId = 0;
-		oamSet(&oamSub, subId, bird.x, bird.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
-			bird.sprite_gfx_mem[bird.gfx_frame], -1, false, false, false, false, false);
-
+		drawBird(&bird, subId);
 		subId++;
-		oamSet(&oamSub, subId, bird_red.x, bird_red.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
-			bird_red.sprite_gfx_mem[bird_red.gfx_frame], -1, false, false, false, false, false);
-			
+		drawPipe(&down_pipe, subId);
 		subId++;
-		oamSet(&oamSub, subId, pipe.x, pipe.y, 0, 0, SpriteSize_32x64, SpriteColorFormat_256Color, 
-			pipe.sprite_gfx_mem[pipe.gfx_frame], -1, false, false, false, false, false);
+		drawPipe(&middle_pipe, subId);
 
 		swiWaitForVBlank();
 
