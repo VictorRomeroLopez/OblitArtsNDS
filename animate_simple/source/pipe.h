@@ -23,9 +23,12 @@ void initPipeSprites(int gfxoffset, u8* gfx)
 	}
 }
 
-void drawPipe(Pipe* pipe, int id){
-    oamSet(&oamSub, id, pipe->x, pipe->y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
+void drawPipe(Pipe* pipe, int* id)
+{
+	int value = *id;
+    oamSet(&oamSub, value, pipe->x, pipe->y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
 			pipe_gfx_sprites[pipe->gfx_frame], -1, false, false, false, false, false);
+	(*id)++;
 }
 
 #endif

@@ -115,7 +115,7 @@ void initBackgrounds()
 int main(void) 
 {
 	int frameCounter = 0;
-	Bird bird = {0,0};
+	Bird bird = {38,0};
 	Pipe middle_pipe = {10, 10, PIPE_MIDDLE};
 	Pipe down_pipe = {10, 32+10, PIPE_DOWN};
 
@@ -136,6 +136,7 @@ int main(void)
 	//-----------------------------------------------------------------
 	initBirdSprites(0, (u8*)flappy_yellowTiles);
 	initPipeSprites(32*32*6, (u8*)flappy_yellowTiles);
+	updateBirdPosition(&bird);
 	
 	//dmaCopy(manPal, SPRITE_PALETTE, 512);
 	dmaCopy(flappy_yellowPal, SPRITE_PALETTE_SUB, 512);
@@ -148,7 +149,7 @@ int main(void)
 		frameCounter++;
 		scanKeys();
 
-		int keys = keysHeld();
+		int keys = keysDown();
 		
 		if(keys & KEY_START) break;
 
@@ -156,20 +157,21 @@ int main(void)
 		{
 			if(keys & KEY_UP)
 			{
-				if(bird.y >= SCREEN_TOP) bird.y--;
+				moveBirdUp(&bird);
 			}
 			if(keys & KEY_LEFT)
 			{
-				if(bird.x >= SCREEN_LEFT) bird.x--;
+
 			}
 			if(keys & KEY_RIGHT)
 			{
-				if(bird.x <= SCREEN_RIGHT) bird.x++;
+
 			}
 			if(keys & KEY_DOWN)
 			{
-				if(bird.y <= SCREEN_BOTTOM) bird.y++;
+				moveBirdDown(&bird);
 			}
+			updateBirdPosition(&bird);
 		}
 
 		if(frameCounter % 10 == 0){
@@ -187,11 +189,9 @@ int main(void)
 		// 	man.sprite_gfx_mem, -1, false, false, false, false, false);
 		
 		int subId = 0;
-		drawBird(&bird, subId);
-		subId++;
-		drawPipe(&down_pipe, subId);
-		subId++;
-		drawPipe(&middle_pipe, subId);
+		drawBird(&bird, &subId);
+		drawPipe(&down_pipe, &subId);
+		drawPipe(&middle_pipe, &subId);
 
 		swiWaitForVBlank();
 
