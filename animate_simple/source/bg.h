@@ -33,9 +33,8 @@
 void DrawBackground()
 {
     int bg3 = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0,0);
-	dmaCopy(backgroundTiles, bgGetGfxPtr(bg3), 256*256);
+	dmaCopy(backgroundBitmapLen, bgGetGfxPtr(bg3), 256*256);
 	dmaCopy(backgroundPal, BG_PALETTE, 256*2);
-    dmaCopy(backgroundPal, SPRITE_PALETTE_SUB, 256*2);
 }
 
 #endif
