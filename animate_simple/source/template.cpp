@@ -169,15 +169,10 @@ int main(void)
 	while(1) 
 	{
 		frameCounter++;
-
 		#pragma region KeyDetection
-
 		scanKeys();
-
 		int keys = keysDown();
-		
 		if(keys & KEY_START) break;
-
 		if(keys)
 		{
 			if(keys & KEY_TOUCH)
@@ -185,13 +180,24 @@ int main(void)
 				gameStarted = true;
 			}
 		}
-
 		#pragma endregion
 
 		if(frameCounter % 10 == 0){
 			birdcpp.Animate();
 		}
 
+		// Set oam attributes, notice the only difference is in the sprite 
+		// graphics memory pointer argument.  The man only has one pointer
+		// while the women has an array of pointers
+		//------------------------------------------------------------------
+		//int mainId = 0;
+		// oamSet(&oamMain, mainId, man.x, man.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
+		// 	man.sprite_gfx_mem, -1, false, false, false, false, false);
+		u8 subId = 0;
+		birdcpp.drawBird(&subId);
+		pipecpp.drawPipe(&subId);
+
+		//GAME LOOP
 		if(gameStarted)
 		{
 			if(keys)
@@ -231,23 +237,7 @@ int main(void)
 
 			pipecpp.movePipe();
 		}
-
-		//-----------------------------------------------------------------
-		// Set oam attributes, notice the only difference is in the sprite 
-		// graphics memory pointer argument.  The man only has one pointer
-		// while the women has an array of pointers
-		//------------------------------------------------------------------
-
-		//int mainId = 0;
-		// oamSet(&oamMain, mainId, man.x, man.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
-		// 	man.sprite_gfx_mem, -1, false, false, false, false, false);
-		
-		u8 subId = 0;
-		birdcpp.drawBird(&subId);
-		pipecpp.drawPipe(&subId);
-
 		swiWaitForVBlank();
-
 		oamUpdate(&oamMain);
 		oamUpdate(&oamSub);
 	}
