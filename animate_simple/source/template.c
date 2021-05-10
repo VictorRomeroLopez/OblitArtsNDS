@@ -43,6 +43,7 @@ demos will follow this one.
 #include <flappy_yellow.h>
 #include "pipe.h"
 #include "bird.h"
+#include "bg.h"
 
 //---------------------------------------------------------------------
 // Screen dimentions
@@ -122,14 +123,17 @@ int main(void)
 	//-----------------------------------------------------------------
 	// Initialize the graphics engines
 	//-----------------------------------------------------------------
-	videoSetMode(MODE_0_2D);
+	videoSetMode(MODE_5_2D);
 	videoSetModeSub(MODE_0_2D);
 
-	vramSetBankA(VRAM_A_MAIN_SPRITE);
+	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
 	vramSetBankD(VRAM_D_SUB_SPRITE);
 
 	oamInit(&oamMain, SpriteMapping_1D_128, false);
 	oamInit(&oamSub, SpriteMapping_1D_128, false);
+	
+	//touch Input Init
+	touchPosition touch;
 
 	//-----------------------------------------------------------------
 	// Init sprites
@@ -137,10 +141,9 @@ int main(void)
 	initBirdSprites(0, (u8*)flappy_yellowTiles);
 	initPipeSprites(32*32*6, (u8*)flappy_yellowTiles);
 	updateBirdPosition(&bird);
-	
+	DrawBackground();
 	//dmaCopy(manPal, SPRITE_PALETTE, 512);
 	dmaCopy(flappy_yellowPal, SPRITE_PALETTE_SUB, 512);
-
 	//-----------------------------------------------------------------
 	// main loop
 	//-----------------------------------------------------------------
@@ -171,6 +174,12 @@ int main(void)
 			{
 				moveBirdDown(&bird);
 			}
+			if(keys & KEY_TOUCH)
+			{
+				touchRead(&touch);
+				moveBirdDown(&bird);
+			}
+
 			updateBirdPosition(&bird);
 		}
 
@@ -192,7 +201,6 @@ int main(void)
 		drawBird(&bird, &subId);
 		drawPipe(&down_pipe, &subId);
 		drawPipe(&middle_pipe, &subId);
-
 		swiWaitForVBlank();
 
 		oamUpdate(&oamMain);

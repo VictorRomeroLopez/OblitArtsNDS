@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "man.h": "c"
+        "man.h": "c",
+        "flappy_yellow.h": "c"
     }
 }
