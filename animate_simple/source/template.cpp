@@ -57,7 +57,7 @@ enum {SCREEN_TOP = 0, SCREEN_BOTTOM = 192, SCREEN_LEFT = 0, SCREEN_RIGHT = 256};
 void DrawBackground()
 {
     int bg3 = bgInit(3, BgType_Bmp8, BgSize_B8_256x256, 0,0);
-	dmaCopy(backgroundTiles, bgGetGfxPtr(bg3), 256*256);
+	dmaCopy(backgroundBitmap, bgGetGfxPtr(bg3), 256*256);
 	dmaCopy(backgroundPal, BG_PALETTE, 256*2);
     dmaCopy(backgroundPal, BG_PALETTE_SUB, 256*2);
 }
@@ -131,7 +131,7 @@ void initPipeSprites(int gfxoffset, u8* gfx)
 int main(void) 
 {
 	short frameCounter = 0;
-
+	bool gameStarted = false;
 	BirdCpp birdcpp = BirdCpp(38,0);
 	PipeCpp pipecpp = PipeCpp();
 
@@ -139,10 +139,13 @@ int main(void)
 	// Initialize the graphics engines
 	//-----------------------------------------------------------------
 	videoSetMode(MODE_5_2D);
-	videoSetModeSub(MODE_0_2D);
+	videoSetModeSub(MODE_5_2D | // Set the graphics mode to Mode 5
+                    DISPLAY_BG3_ACTIVE);
 
-	vramSetBankA(VRAM_A_MAIN_BG_0x06000000);
-	vramSetBankD(VRAM_D_SUB_SPRITE);
+	vramSetMainBanks(VRAM_A_MAIN_BG_0x06000000,
+                     VRAM_B_MAIN_BG_0x06020000,
+                     VRAM_C_SUB_BG_0x06200000,
+                     VRAM_D_SUB_SPRITE);
 
 	oamInit(&oamMain, SpriteMapping_1D_128, false);
 	oamInit(&oamSub, SpriteMapping_1D_128, false);
@@ -177,37 +180,10 @@ int main(void)
 
 		if(keys)
 		{
-			if(keys & KEY_UP)
-			{
-				moveBirdUp();
-			}
-			if(keys & KEY_LEFT)
-			{
-
-			}
-			if(keys & KEY_RIGHT)
-			{
-
-			}
-			if(keys & KEY_DOWN)
-			{
-				moveBirdDown();
-			}
 			if(keys & KEY_TOUCH)
 			{
-				touchRead(&touch);
-
-				if(touch.py < SCREEN_BOTTOM/2)
-				{
-					moveBirdUp();
-				}
-				else
-				{
-					moveBirdDown();
-				}
+				gameStarted = true;
 			}
-
-			birdcpp.UpdatePosition();
 		}
 
 		#pragma endregion
@@ -216,7 +192,45 @@ int main(void)
 			birdcpp.Animate();
 		}
 
-		pipecpp.movePipe();
+		if(gameStarted)
+		{
+			if(keys)
+			{
+				if(keys & KEY_UP)
+				{
+					moveBirdUp();
+				}
+				if(keys & KEY_LEFT)
+				{
+
+				}
+				if(keys & KEY_RIGHT)
+				{
+
+				}
+				if(keys & KEY_DOWN)
+				{
+					moveBirdDown();
+				}
+				if(keys & KEY_TOUCH)
+				{
+					touchRead(&touch);
+
+					if(touch.py < SCREEN_BOTTOM/2)
+					{
+						moveBirdUp();
+					}
+					else
+					{
+						moveBirdDown();
+					}
+				}
+
+				birdcpp.UpdatePosition();
+			}
+
+			pipecpp.movePipe();
+		}
 
 		//-----------------------------------------------------------------
 		// Set oam attributes, notice the only difference is in the sprite 
