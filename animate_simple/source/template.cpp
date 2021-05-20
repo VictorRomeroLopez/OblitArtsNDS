@@ -40,17 +40,37 @@ demos will follow this one.
 ---------------------------------------------------------------------------------*/
 #include <nds.h>
 
+#include <iostream>
 #include <flappy_yellow.h>
 #include <background.h>
 #include <vector>
+#include <time.h>
+#include <map>
 
+#include "sprites.h"
 #include "bird.h"
 #include "pipe.h"
+#include "GameStates/gameState.h"
+#include "GameStates/gameStarting.h"
+#include "game.h"
 
 //---------------------------------------------------------------------
 // Screen dimentions
 //---------------------------------------------------------------------
-enum {SCREEN_TOP = 0, SCREEN_BOTTOM = 192, SCREEN_LEFT = 0, SCREEN_RIGHT = 256};
+enum {
+	SCREEN_TOP = 0, 
+	SCREEN_BOTTOM = 192, 
+	SCREEN_LEFT = 0, 
+	SCREEN_RIGHT = 256
+};
+
+
+u16* Sprites::endscreen_gfx_sprites[8];
+u16* Sprites::numbers_gfx_sprites[10];
+
+u8 score = 0;
+
+bool _drawScore = false;
 
 #pragma region Bg
 
@@ -64,115 +84,90 @@ void DrawBackground()
 
 #pragma endregion
 
-#pragma region Bird
+void DrawNumber(int number, int x, int y, u8* id){
+	
+	oamSet(&oamSub, *id, x, y, 0, 0, SpriteSize_8x8, SpriteColorFormat_256Color,
+			Sprites::numbers_gfx_sprites[number/10], -1, false, false, false, false, false);
+	(*id)++;
+	oamSet(&oamSub, *id, x+8, y, 0, 0, SpriteSize_8x8, SpriteColorFormat_256Color,
+			Sprites::numbers_gfx_sprites[number%10], -1, false, false, false, false, false);
+	(*id)++;
+}
 
-void initBirdSprites(int gfxoffset, u8* gfx){
-	gfx += gfxoffset;
+void Draw(BirdCpp* bird, std::vector<PipeCpp> pipes){
+	// Set oam attributes, notice the only difference is in the sprite 
+	// graphics memory pointer argument.  The man only has one pointer
+	// while the women has an array of pointers
+	//------------------------------------------------------------------
 
-	for(int i = 0; i < 3; i++)
-	{
-		bird_gfx_mem[i] = oamAllocateGfx(&oamSub, 
-		SpriteSize_32x32, SpriteColorFormat_256Color);
-		dmaCopy(gfx, bird_gfx_mem[i], 32*32);
-		gfx += 32*32;
+	//int mainId = 0;
+	// oamSet(&oamMain, mainId, man.x, man.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
+	// 	man.sprite_gfx_mem, -1, false, false, false, false, false);
+
+	u8 subId = 0;
+
+	if(_drawScore){
+
+		DrawNumber(score, SCREEN_RIGHT/2 + 27, SCREEN_BOTTOM/2 - 13, &subId);
+
+		int posX = SCREEN_RIGHT/2;
+		int posY = SCREEN_BOTTOM/2;
+
+		for(int i = 0; i < 2; i++){
+			for(int j = 0; j < 4; j++){
+				oamSet(&oamSub, subId, posX  + 32*j - 64, posY  + 32*i - 32, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color,
+						Sprites::endscreen_gfx_sprites[i*4+j], -1, false, false, false, false, false);
+			subId++;
+			}
+		}
+	}
+
+	bird->drawBird(&subId);
+
+	for(PipeCpp pipe : pipes){
+		pipe.drawPipe(&subId);
 	}
 }
-
-void CheckPosition();
-
-void moveBirdUp()
-{
-	bird_position--;
-	CheckPosition();
-}
-
-void moveBirdDown()
-{
-	bird_position++;
-	CheckPosition();
-}
-
-int numPositions()
-{
-	return sizeof(bird_positions)/sizeof(bird_positions[0]);
-}
-
-void CheckPosition()
-{
-	if(bird_position < 0)
-	{
-		bird_position = 0;
-	}
-	else if(bird_position >= numPositions())
-	{
-		bird_position = numPositions() - 1;
-	}
-}
-
-#pragma endregion
-
-#pragma region Pipe-
-
-void initPipeSprites(int gfxoffset, u8* gfx)
-{
-	gfx += gfxoffset;
-
-	for(int i = 0; i < 2; i++)
-	{
-		pipe_gfx_sprites[i] = oamAllocateGfx(&oamSub, SpriteSize_32x32, 
-		SpriteColorFormat_256Color);
-		dmaCopy(gfx, pipe_gfx_sprites[i], 32*32);
-		gfx += 32*32;
-	}
-}
-
-#pragma endregion
 
 int main(void) 
 {
+	srand(time(NULL));
+	
+	u8 birdPositionX = 40;
 	short frameCounter = 0;
 	bool gameStarted = false;
-	BirdCpp birdcpp = BirdCpp(38,0);
-	PipeCpp pipecpp = PipeCpp();
+	BirdCpp birdcpp = BirdCpp(birdPositionX);
+	std::vector<PipeCpp> pipeVector = std::vector<PipeCpp>();
 
-	//-----------------------------------------------------------------
-	// Initialize the graphics engines
-	//-----------------------------------------------------------------
-	videoSetMode(MODE_5_2D);
-	videoSetModeSub(MODE_5_2D | // Set the graphics mode to Mode 5
-                    DISPLAY_BG3_ACTIVE);
+	Game game = Game();
+	game.Things();
+	game.Stuff();
 
-	vramSetMainBanks(VRAM_A_MAIN_BG_0x06000000,
-                     VRAM_B_MAIN_BG_0x06020000,
-                     VRAM_C_SUB_BG_0x06200000,
-                     VRAM_D_SUB_SPRITE);
-
-	oamInit(&oamMain, SpriteMapping_1D_128, false);
-	oamInit(&oamSub, SpriteMapping_1D_128, false);
+	GameStateType currentState = GameStateType::Start;
+	std::map<GameStateType, GameState*> stateTypeToGameState = std::map<GameStateType, GameState*>();
+	stateTypeToGameState.insert(std::pair<GameStateType, GameState*>(GameStateType::Start, new GameStarting));
 	
+	stateTypeToGameState[currentState]->OnEnter();
+
 	//touch Input Init
 	touchPosition touch;
 
-	//-----------------------------------------------------------------
-	// Init sprites
-	//-----------------------------------------------------------------
-	initBirdSprites(0, (u8*)flappy_yellowTiles);
-	initPipeSprites(32*32*6, (u8*)flappy_yellowTiles);
-	birdcpp.UpdatePosition();
+	for(int i = 0; i < 4 ; i++){
+		pipeVector.push_back(PipeCpp(SCREEN_RIGHT + SPRITE_SIZE/2 + (72*i), bird_positions[rand()%4]));
+	}
+
 	DrawBackground();
+
 	//dmaCopy(manPal, SPRITE_PALETTE, 512);
-	dmaCopy(flappy_yellowPal, SPRITE_PALETTE_SUB, 512);
+	//dmaCopy(flappy_yellowPal, SPRITE_PALETTE_SUB, 512);
 	
-	//-----------------------------------------------------------------
-	// main loop
-	//-----------------------------------------------------------------
-	while(1) 
-	{
-		frameCounter++;
-		#pragma region KeyDetection
+	while(!gameStarted){
+		
 		scanKeys();
 		int keys = keysDown();
+
 		if(keys & KEY_START) break;
+
 		if(keys)
 		{
 			if(keys & KEY_TOUCH)
@@ -180,67 +175,106 @@ int main(void)
 				gameStarted = true;
 			}
 		}
-		#pragma endregion
+
+		Draw(&birdcpp, pipeVector);
+
+		swiWaitForVBlank();
+
+		oamUpdate(&oamMain);
+		oamUpdate(&oamSub);
+	}
+
+	//-----------------------------------------------------------------
+	// main loop
+	//-----------------------------------------------------------------
+	while(1)
+	{
+		frameCounter++;
+		
+		scanKeys();
+		int keys = keysDown();
+
+		if(keys & KEY_START) break;
 
 		if(frameCounter % 10 == 0){
 			birdcpp.Animate();
 		}
 
-		// Set oam attributes, notice the only difference is in the sprite 
-		// graphics memory pointer argument.  The man only has one pointer
-		// while the women has an array of pointers
-		//------------------------------------------------------------------
-		//int mainId = 0;
-		// oamSet(&oamMain, mainId, man.x, man.y, 0, 0, SpriteSize_32x32, SpriteColorFormat_256Color, 
-		// 	man.sprite_gfx_mem, -1, false, false, false, false, false);
-		u8 subId = 0;
-		birdcpp.drawBird(&subId);
-		pipecpp.drawPipe(&subId);
-
 		//GAME LOOP
-		if(gameStarted)
+		if(keys)
 		{
-			if(keys)
+			if(keys & KEY_UP)
 			{
-				if(keys & KEY_UP)
-				{
-					moveBirdUp();
-				}
-				if(keys & KEY_LEFT)
-				{
+				birdcpp.moveUp();
+			}
+			if(keys & KEY_LEFT)
+			{
 
-				}
-				if(keys & KEY_RIGHT)
-				{
+			}
+			if(keys & KEY_RIGHT)
+			{
 
-				}
-				if(keys & KEY_DOWN)
-				{
-					moveBirdDown();
-				}
-				if(keys & KEY_TOUCH)
-				{
-					touchRead(&touch);
+			}
+			if(keys & KEY_DOWN)
+			{
+				birdcpp.moveDown();
+			}
+			if(keys & KEY_TOUCH)
+			{
+				touchRead(&touch);
 
-					if(touch.py < SCREEN_BOTTOM/2)
-					{
-						moveBirdUp();
-					}
-					else
-					{
-						moveBirdDown();
-					}
+				if(touch.py < SCREEN_BOTTOM/2)
+				{
+					birdcpp.moveUp();
 				}
+				else
+				{
+					birdcpp.moveDown();
+				}
+			}
+			
+			birdcpp.UpdatePosition();
+		}
 
-				birdcpp.UpdatePosition();
+		bool birdCollidesWithPipe = false;
+		for(int i = 0; i < pipeVector.size(); i++){
+			if(pipeVector[i].isOffScreen()){
+				pipeVector[i].setPositionInit();
 			}
 
-			pipecpp.movePipe();
+			if(pipeVector[i].checkCollision(&birdcpp)){
+				birdCollidesWithPipe = true;
+				break;
+			}
+
+			pipeVector[i].movePipe();
+
+			if(pipeVector[i].checkScored(birdPositionX)){
+				score++;
+			}
 		}
+
+		Draw(&birdcpp, pipeVector);
+
 		swiWaitForVBlank();
+
 		oamUpdate(&oamMain);
 		oamUpdate(&oamSub);
+		
+		if(birdCollidesWithPipe){
+			_drawScore = true;
+			break;
+		}
 	}
 
+	while(1){
+		Draw(&birdcpp, pipeVector);
+
+		swiWaitForVBlank();
+
+		oamUpdate(&oamMain);
+		oamUpdate(&oamSub);
+
+	}
 	return 0;
 }
