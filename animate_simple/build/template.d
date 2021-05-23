@@ -60,14 +60,22 @@ template.o: \
  C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/nds/arm9/video.h \
  C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/nds/arm9/videoGL.h \
  C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/nds/arm9/nand.h \
+ C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/maxmod9.h \
+ C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/mm_types.h \
  C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/flappy_yellow.h \
  C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/background.h \
+ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/soundbank.h \
+ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/soundbank_bin.h \
+ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/constants.h \
  C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/sprites.h \
  C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/bird.h \
  C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/pipe.h \
  C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameState.h \
+ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/game.h \
  C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameStarting.h \
- C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/game.h
+ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gamePlaying.h \
+ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameEnd.h \
+ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameStateManager.h
 
 C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/nds.h:
 
@@ -189,9 +197,19 @@ C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/nds/ar
 
 C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/nds/arm9/nand.h:
 
+C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/maxmod9.h:
+
+C:/Users/victo/Documents/OblitArtsNDS/msys64/opt/devkitpro/libnds/include/mm_types.h:
+
 C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/flappy_yellow.h:
 
 C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/background.h:
+
+C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/soundbank.h:
+
+C:/Users/victo/Documents/OblitArtsNDS/animate_simple/build/soundbank_bin.h:
+
+C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/constants.h:
 
 C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/sprites.h:
 
@@ -201,6 +219,12 @@ C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/pipe.h:
 
 C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameState.h:
 
+C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/game.h:
+
 C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameStarting.h:
 
-C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/game.h:
+C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gamePlaying.h:
+
+C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameEnd.h:
+
+C:/Users/victo/Documents/OblitArtsNDS/animate_simple/source/GameStates/gameStateManager.h:

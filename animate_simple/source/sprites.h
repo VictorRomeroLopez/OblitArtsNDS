@@ -7,7 +7,35 @@ class Sprites{
         static u16* pipe_gfx_sprites[2];
         static u16* bird_gfx_mem[6];
 
-        static void initEndWindowSprites(int gfxoffset, u8* gfx){
+        static void unloadSprites()
+        {
+            int i;
+
+            for(i =0; i < 2; i++){
+                oamFreeGfx(&oamSub, endscreen_gfx_sprites[i]);
+                oamFreeGfx(&oamSub, numbers_gfx_sprites[i]);
+                oamFreeGfx(&oamSub, pipe_gfx_sprites[i]);
+                oamFreeGfx(&oamSub, bird_gfx_mem[i]);
+            }
+
+            for(i = 2; i < 6; i++){
+                oamFreeGfx(&oamSub, endscreen_gfx_sprites[i]);
+                oamFreeGfx(&oamSub, numbers_gfx_sprites[i]);
+                oamFreeGfx(&oamSub, bird_gfx_mem[i]);
+            }
+
+            for(i = 6; i < 8; i++){
+                oamFreeGfx(&oamSub, endscreen_gfx_sprites[i]);
+                oamFreeGfx(&oamSub, numbers_gfx_sprites[i]);
+            }
+            
+            for(i = 8; i < 10; i++){
+                oamFreeGfx(&oamSub, numbers_gfx_sprites[i]);
+            }
+        }
+
+        static void initEndWindowSprites(int gfxoffset, u8* gfx)
+        {
             gfx += gfxoffset;
 
             for(int i = 0; i < 8; i++)
@@ -18,7 +46,8 @@ class Sprites{
             }
         }
 
-        static void initNumbers(int gfxoffset, u8* gfx){
+        static void initNumbers(int gfxoffset, u8* gfx)
+        {
             gfx += gfxoffset;
 
             for(int i = 0; i < 10; i++)
@@ -43,7 +72,8 @@ class Sprites{
             }
         }
 
-        static void initBirdSprites(int gfxoffset, u8* gfx){
+        static void initBirdSprites(int gfxoffset, u8* gfx)
+        {
             gfx += gfxoffset;
 
             for(int i = 0; i < 3; i++)
@@ -54,5 +84,4 @@ class Sprites{
                 gfx += 32*32;
             }
         }
-
 };

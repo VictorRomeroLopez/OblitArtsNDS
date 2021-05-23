@@ -3,24 +3,27 @@
 #define PIPE_HOLE_DISTANCE 17
 #define SPRITE_SIZE 32
 
-class Sprites;
-
 u16* Sprites::pipe_gfx_sprites[2];
 u8 pipe_speed = 1;
 
-class PipeCpp{
+class PipeCpp
+{
     public:
         s16 x;
         s16 y;
         bool counted;
 
-    PipeCpp(){
-        x = 256+SPRITE_SIZE/2;
-        y = 115;
+    PipeCpp()
+    {
+        x = 0;
+        y = 0;
         counted = false;
     }
 
-    PipeCpp(s16 x, s16 y) : x(x), y(y){}
+    PipeCpp(s16 x, s16 y) : x(x), y(y)
+    {
+        counted = false;
+    }
 
     enum PipeState { PIPE_MIDDLE = 0, PIPE_CAP = 1};
 
@@ -53,7 +56,8 @@ class PipeCpp{
 
         pipePositionYPivotUp += SPRITE_SIZE;
 
-        while(pipePositionYPivotUp < 192){
+        while(pipePositionYPivotUp < Constants::SCREEN_BOTTOM)
+        {
             oamSet(&oamSub, *id, pipePositionXPivotCenter, pipePositionYPivotUp + PIPE_HOLE_DISTANCE,
                     0, 0, SpriteSize_32x32, SpriteColorFormat_256Color,
                     Sprites::pipe_gfx_sprites[PIPE_MIDDLE], -1, false, false, false, false, false);
@@ -62,36 +66,45 @@ class PipeCpp{
         }
     }
 
-    bool isOffScreen(){
+    bool isOffScreen()
+    {
         return x < -(SPRITE_SIZE/2);
     }
 
-    void movePipe(){
+    void movePipe()
+    {
         x -= pipe_speed;
     }
 
-    bool checkScored(u8 birdPositionX){
-        if(!counted && x < birdPositionX-32){
+    bool checkScored(u8 birdPositionX)
+    {
+        if(!counted && x < birdPositionX-32)
+        {
             counted = true;
             return true;
         }
+        
         return false;
     }
 
-    void setPositionInit(){
+    void setPositionInit()
+    {
         counted = false;
-        x += 256 + SPRITE_SIZE;
+        x += Constants::SCREEN_RIGHT + SPRITE_SIZE;
         y = bird_positions[rand() % 4];
     }
 
-    bool checkCollision(BirdCpp* bird){
+    void setPosition(s16 xPos, s16 yPos)
+    {
+        x = xPos;
+        y = yPos;
+    }
 
-        if(bird->x-SPRITE_SIZE/2 < x + SPRITE_SIZE/2 &&
-        bird->x + SPRITE_SIZE/2 > x-SPRITE_SIZE/2 &&
-        bird->y - SPRITE_SIZE/2 < y - PIPE_HOLE_DISTANCE){
-            return true;
-        }
-
-        return false;
+    bool checkCollision(BirdCpp* bird)
+    {
+        return bird->x - 8 < x + SPRITE_SIZE/2 - 4 &&
+        bird->x + 8 > x-SPRITE_SIZE/2 + 4 &&
+        (bird->y - 6 < y - PIPE_HOLE_DISTANCE ||
+        bird->y - 6 > y + PIPE_HOLE_DISTANCE);
     }
 };
